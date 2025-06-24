@@ -30,4 +30,50 @@ class DashboardController extends Controller
             'pelanggaranPerBulan' => $pelanggaranPerBulan,
         ]);
     }
+
+    public function walikelas()
+    {
+        $total = Pelanggaran::count();
+        $selesai = Pelanggaran::where('status', 'Selesai')->count();
+        $diproses = Pelanggaran::where('status', 'Diproses')->count();
+        $ditunda = Pelanggaran::where('status', 'Ditunda')->count();
+        
+
+        $pelanggaranPerBulan = Pelanggaran::selectRaw("DATE_FORMAT(waktu_terjadi, '%b %Y') as bulan, COUNT(*) as jumlah")
+            ->whereYear('waktu_terjadi', now()->year)
+            ->groupBy('bulan')
+            ->orderByRaw("MIN(waktu_terjadi)")
+            ->get();
+
+        return Inertia::render('wkdashboard', [
+            'total' => $total,
+            'selesai' => $selesai,
+            'diproses' => $diproses,
+            'ditunda' => $ditunda,
+            'pelanggaranPerBulan' => $pelanggaranPerBulan,
+        ]);
+    }
+
+    public function gurubk()
+    {
+        $total = Pelanggaran::count();
+        $selesai = Pelanggaran::where('status', 'Selesai')->count();
+        $diproses = Pelanggaran::where('status', 'Diproses')->count();
+        $ditunda = Pelanggaran::where('status', 'Ditunda')->count();
+        
+
+        $pelanggaranPerBulan = Pelanggaran::selectRaw("DATE_FORMAT(waktu_terjadi, '%b %Y') as bulan, COUNT(*) as jumlah")
+            ->whereYear('waktu_terjadi', now()->year)
+            ->groupBy('bulan')
+            ->orderByRaw("MIN(waktu_terjadi)")
+            ->get();
+
+        return Inertia::render('wkdashboard', [
+            'total' => $total,
+            'selesai' => $selesai,
+            'diproses' => $diproses,
+            'ditunda' => $ditunda,
+            'pelanggaranPerBulan' => $pelanggaranPerBulan,
+        ]);
+    }
 }

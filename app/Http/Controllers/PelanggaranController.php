@@ -11,6 +11,7 @@ use App\Services\FonnteService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class PelanggaranController extends Controller
 {
@@ -20,7 +21,7 @@ class PelanggaranController extends Controller
             ->latest()
             ->get();
 
-        $siswaOptions = Siswa::select('id', 'nama')->get();
+        $siswaOptions = Siswa::select('id', 'nama', 'nisn')->get();
         $userOptions = User::select('id', 'name')->get();
         $peraturanOptions = Peraturan::select('id', 'jenis')->get();
 
@@ -174,5 +175,60 @@ dengan status: *{$siswa->status}*.
             ->get();
 
         return response()->json($results);
+    }
+
+    public function laporan(Request $request)
+    {
+        $tahun = $request->tahun;
+        $bulan = $request->bulan;
+        $status = $request->status;
+
+        $query = Pelanggaran::with(['siswa.kelas', 'user', 'peraturan'])
+            ->when($tahun, fn($q) => $q->whereYear('waktu_terjadi', $tahun))
+            ->when($bulan, fn($q) => $q->whereMonth('waktu_terjadi', $bulan))
+            ->when($status, fn($q) => $q->where('status', $status))
+            ->latest();
+
+        $results = $query->get();
+
+        return Inertia::render('Laporan/Pelanggaran', [
+            'pelanggaran' => $results,
+            'filters' => [
+                'tahun' => $tahun,
+                'bulan' => $bulan,
+                'status' => $status,
+            ],
+        ]);
+    }
+
+    public function cetak(Request $request)
+    {
+
+        $request->validate([
+            'tahun' => 'required|integer',
+            'bulan' => 'nullable|integer',
+            'status' => 'nullable|string',
+        ]);
+        
+        $tahun = $request->tahun;
+        $bulan = $request->bulan;
+        $status = $request->status;
+
+        $query = Pelanggaran::with(['siswa.kelas', 'user', 'peraturan'])
+            ->when($tahun, fn($q) => $q->whereYear('waktu_terjadi', $tahun))
+            ->when($bulan, fn($q) => $q->whereMonth('waktu_terjadi', $bulan))
+            ->when($status, fn($q) => $q->where('status', $status))
+            ->orderBy('waktu_terjadi', 'desc');
+
+        $data = $query->get();
+
+        $pdf = PDF::loadView('exports.laporan-pdf', [
+            'pelanggaran' => $data,
+            'tahun' => $tahun,
+            'bulan' => $bulan,
+            'status' => $status,
+        ])->setPaper('A4', 'landscape');
+
+        return $pdf->stream("laporan_pelanggaran_{$tahun}.pdf");
     }
 }

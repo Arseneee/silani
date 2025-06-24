@@ -1,77 +1,128 @@
 import { NavFooter } from '@/components/nav-footer';
-import { NavData, NavMain, NavLog } from '@/components/nav-main';
+import { NavData, NavLog, NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
-import { Link } from '@inertiajs/react';
-import { CircleUserRound, Folder, Home, LayoutGrid, MessageSquareShare, MessageSquareWarning, MonitorCog, OctagonAlert, School, UsersRound } from 'lucide-react';
+import { Link, usePage } from '@inertiajs/react';
+import { CircleUserRound, Folder, Home, LayoutGrid, MessageSquareWarning, MonitorCog, OctagonAlert, School, UsersRound } from 'lucide-react';
 import AppLogo from './app-logo';
 
-const Navigasi: NavItem[] = [
-    {
-        title: 'Home',
-        href: '/',
-        icon: Home,
-    },
-    {
-        title: 'Dashboard',
-        href: '/dashboard',
-        icon: LayoutGrid,
-    },
-];
+const getNavigasi = (role: string): NavItem[] => {
+    const baseNavigasi = [
+        {
+            title: 'Home',
+            href: '/',
+            icon: Home,
+        },
+        {
+            title: 'Dashboard',
+            href: role === 'Admin' ? '/dashboard' : role === 'Guru BK' ? '/bkdashboard' : '/wkdashboard',
+            icon: LayoutGrid,
+        },
+    ];
 
-const MainData: NavItem[] = [
-    {
-        title: 'User',
-        href: '/users',
-        icon: CircleUserRound,
-    },
-    {
-        title: 'Siswa',
-        href: '/siswa',
-        icon: UsersRound,
-    },
-    {
-        title: 'Kelas',
-        href: '/kelas',
-        icon: School,
-    },
-    {
-        title: 'Peraturan',
-        href: '/peraturan',
-        icon: OctagonAlert,
-    },
-    {
-        title: 'Pelanggaran',
-        href: '/pelanggaran',
-        icon: MessageSquareWarning,
-    },
-];
+    return baseNavigasi;
+};
 
-const Log: NavItem[] = [
-    {
-        title: 'logs',
-        href: '/system-logs',
-        icon: MonitorCog,
-    },
-];
+const getMainData = (role: string): NavItem[] => {
+    const allItems = [
+        {
+            title: 'User',
+            href: '/users',
+            icon: CircleUserRound,
+            roles: ['Admin'],
+        },
+        {
+            title: 'Siswa',
+            href: '/siswa',
+            icon: UsersRound,
+            roles: ['Admin', 'Guru BK', 'Wali Kelas'],
+        },
+        {
+            title: 'Kelas',
+            href: '/kelas',
+            icon: School,
+            roles: ['Admin'],
+        },
+        {
+            title: 'Peraturan',
+            href: '/peraturan',
+            icon: OctagonAlert,
+            roles: ['Admin', 'Guru BK'],
+        },
+        {
+            title: 'Pelanggaran',
+            href: '/pelanggaran',
+            icon: MessageSquareWarning,
+            roles: ['Admin', 'Guru BK', 'Wali Kelas'],
+        },
+    ];
 
-const footerNavItems: NavItem[] = [
-    {
-        title: 'Cetak Laporan',
-        href: 'https://github.com/laravel/react-starter-kit',
-        icon: Folder,
-    },
-];
+    return allItems.filter((item) => item.roles.includes(role));
+};
+
+const getLogItems = (role: string): NavItem[] => {
+    if (role === 'Admin') {
+        return [
+            {
+                title: 'Logs',
+                href: '/system-logs',
+                icon: MonitorCog,
+            },
+        ];
+    }
+    return [];
+};
+
+const getFooterItems = (role: string): NavItem[] => {
+    const baseItems = [
+        {
+            title: 'Cetak Laporan',
+            href: '/laporan',
+            icon: Folder,
+            roles: ['Admin', 'Guru BK'],
+        },
+    ];
+
+    return baseItems.filter((item) => item.roles.includes(role));
+};
 
 export function AppSidebar() {
+    const { auth } = usePage<{
+        auth: {
+            user: {
+                id: number;
+                name: string;
+                email: string;
+                role: string;
+            } | null;
+        };
+    }>().props;
+
+    const role = auth.user?.role || '';
+    const navigasi = getNavigasi(role);
+    const mainData = getMainData(role);
+    const logItems = getLogItems(role);
+    const footerItems = getFooterItems(role);
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
-                            <Link href="/dashboard" prefetch>
+                            <Link
+                                href={
+                                    role === 'Admin'
+                                        ? '/dashboard'
+                                        : role === 'Guru BK'
+                                          ? '/bkdashboard'
+                                          : role === 'Wali Kelas'
+                                            ? '/wkdashboard'
+                                            : '/'
+                                }
+                                prefetch
+                            >
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>
@@ -80,13 +131,13 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain items={Navigasi} />
-                <NavData items={MainData} />
-                <NavLog items={Log} />
+                <NavMain items={navigasi} />
+                <NavData items={mainData} />
+                <NavLog items={logItems} />
             </SidebarContent>
 
             <SidebarFooter>
-                <NavFooter items={footerNavItems} className="mt-auto" />
+                <NavFooter items={footerItems} />
                 <NavUser />
             </SidebarFooter>
         </Sidebar>

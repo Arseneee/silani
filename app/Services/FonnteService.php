@@ -267,4 +267,17 @@ class FonnteService
 
         return $response->json();
     }
+
+    public static function normalizePhone($phone) {
+    $phone = preg_replace('/[^0-9]/', '', $phone);
+
+    if (preg_match('/^0/', $phone)) {
+        $phone = '62' . substr($phone, 1);
+    }
+
+    $phone = ltrim($phone, '+');
+    $phone = preg_replace('/^00/', '', $phone);
+    
+    return $phone;
+}
 }

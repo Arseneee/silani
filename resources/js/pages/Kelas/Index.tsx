@@ -31,6 +31,7 @@ export default function KelasPage() {
     const { props } = usePage<PageProps>();
     const kelasFromServer = props.kelas || [];
     const waliKelasOptions = props.waliKelasOptions || [];
+    const currentUser = props.auth.user;
 
     const [searchTerm, setSearchTerm] = useState('');
     const [kategoriFilter, setKategoriFilter] = useState('');
@@ -42,7 +43,6 @@ export default function KelasPage() {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [deleteId, setDeleteId] = useState<number | null>(null);
 
-    // Filter dan search
     const filteredData = kelasFromServer.filter((item) => {
         const matchesSearch = item.nama.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesKategori = kategoriFilter ? item.nama.startsWith(kategoriFilter) : true;

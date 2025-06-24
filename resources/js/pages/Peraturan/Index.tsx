@@ -36,6 +36,9 @@ export default function PeraturanPage() {
     const page = usePage();
     const peraturanFromServer = (page.props.peraturan || []) as Peraturan[];
 
+    const { auth } = usePage().props as any;
+    const isGuruBK = auth.user?.role === 'Guru BK';
+
     const [peraturanData, setPeraturanData] = useState<Peraturan[]>(peraturanFromServer);
     const [filteredData, setFilteredData] = useState<Peraturan[]>(peraturanFromServer);
     const [searchTerm, setSearchTerm] = useState('');
@@ -159,12 +162,14 @@ export default function PeraturanPage() {
             <div className="p-4">
                 <div className="mb-6 flex items-center justify-between">
                     <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Daftar Peraturan</h1>
-                    <button
-                        onClick={openCreateModal}
-                        className="inline-flex items-center gap-2 rounded bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700"
-                    >
-                        <Plus size={16} /> Tambah Peraturan
-                    </button>
+                    {!isGuruBK && (
+                        <button
+                            onClick={openCreateModal}
+                            className="inline-flex items-center gap-2 rounded bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700"
+                        >
+                            <Plus size={16} /> Tambah Siswa
+                        </button>
+                    )}
                 </div>
 
                 <SearchFilterBar
@@ -185,7 +190,7 @@ export default function PeraturanPage() {
                     <table className="w-full text-left text-sm text-gray-500 dark:text-gray-400">
                         <thead className="bg-gray-50 text-xs text-gray-700 uppercase dark:bg-gray-700 dark:text-gray-400">
                             <tr>
-                                {['no', 'jenis', 'kategori', 'poin', 'aksi'].map((key) => (
+                                {['no', 'jenis', 'kategori', 'poin', ...(!isGuruBK ? ['aksi'] : [])].map((key) => (
                                     <th
                                         key={key}
                                         className={`cursor-pointer px-6 py-3 ${key === 'aksi' ? 'cursor-default' : ''}`}
@@ -229,24 +234,26 @@ export default function PeraturanPage() {
                                                     {item.poin}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-3">
-                                                    <button
-                                                        onClick={() => openEditModal(item)}
-                                                        className="text-blue-600 hover:text-blue-800"
-                                                        title="Edit"
-                                                    >
-                                                        <Pencil size={18} />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => confirmDelete(item.id)}
-                                                        className="text-red-600 hover:text-red-800"
-                                                        title="Hapus"
-                                                    >
-                                                        <Trash2 size={18} />
-                                                    </button>
-                                                </div>
-                                            </td>
+                                            {!isGuruBK && (
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <button
+                                                            onClick={() => openEditModal(item)}
+                                                            className="text-blue-600 hover:text-blue-800"
+                                                            title="Edit"
+                                                        >
+                                                            <Pencil size={18} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => confirmDelete(item.id)}
+                                                            className="text-red-600 hover:text-red-800"
+                                                            title="Hapus"
+                                                        >
+                                                            <Trash2 size={18} />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            )}
                                         </motion.tr>
                                     ))
                                 ) : (

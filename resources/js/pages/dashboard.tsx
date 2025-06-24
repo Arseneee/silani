@@ -104,14 +104,14 @@ export default function Dashboard() {
     useEffect(() => {
         const interval = setInterval(() => {
             fetchDeviceStatus();
-        }, 10000); // tiap 10 detik
+        }, 10000);
 
-        return () => clearInterval(interval); // bersihkan interval saat komponen unmount
+        return () => clearInterval(interval);
     }, []);
 
     async function fetchDeviceStatus() {
         try {
-            const res = await fetch('/devices/status'); // endpoint API yang mengembalikan status device terbaru
+            const res = await fetch('/devices/status');
             if (!res.ok) throw new Error('Failed to fetch device status');
             const data = await res.json();
             setDevices(data.devices);
@@ -333,7 +333,7 @@ export default function Dashboard() {
                 </div>
 
                 {/* Chart Section */}
-                <div
+                <div    
                     className={`transform transition-all delay-500 duration-1000 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}
                 >
                     <div className="rounded-2xl border border-gray-200/50 bg-white/80 p-6 shadow-xl backdrop-blur-sm transition-all duration-300 hover:shadow-2xl dark:border-gray-700/50 dark:bg-gray-900/80">

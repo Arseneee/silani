@@ -17,16 +17,17 @@ interface Pelanggaran {
     status: 'diproses' | 'selesai' | 'ditunda';
     keterangan: string;
     waktu_terjadi: string;
-    siswa?: { nama: string };
-    user?: { name: string };
+    siswa?: { nama: string; kelas?: { user_id: number } };
+    user?: { id: number; name: string };
     peraturan?: { jenis: string };
 }
 
 interface PageProps {
     pelanggaran: Pelanggaran[];
-    siswaOptions: { id: number; nama: string }[];
+    siswaOptions: { id: number; nama: string; nisn: string }[];
     userOptions: { id: number; name: string }[];
     peraturanOptions: { id: number; jenis: string }[];
+    auth: { user: { id: number; role: string } };
     [key: string]: any;
 }
 
@@ -35,6 +36,7 @@ const breadcrumbs: BreadcrumbItem[] = [{ title: 'Main Data', href: '/pelanggaran
 export default function PelanggaranPage() {
     const { props } = usePage<PageProps>();
     const pelanggaranFromServer = props.pelanggaran || [];
+    const currentUser = props.auth.user;
 
     const [data, setData] = useState<Pelanggaran[]>(pelanggaranFromServer);
     const [filteredData, setFilteredData] = useState<Pelanggaran[]>(pelanggaranFromServer);
@@ -62,8 +64,15 @@ export default function PelanggaranPage() {
         if (statusFilter) {
             result = result.filter((item) => item.status === statusFilter);
         }
+
+        if (currentUser.role === 'Guru BK') {
+            result = result.filter((item) => item.user_id === currentUser.id);
+        } else if (currentUser.role === 'Wali Kelas') {
+            result = result.filter((item) => item.user_id === currentUser.id);
+        }
+
         setFilteredData(result);
-    }, [searchTerm, statusFilter, sortField, sortDirection, data]);
+    }, [searchTerm, statusFilter, sortField, sortDirection, data, currentUser]);
 
     const handleSort = (field: keyof Pelanggaran) => {
         if (field === sortField) {
@@ -177,7 +186,7 @@ export default function PelanggaranPage() {
                     <table className="w-full text-left text-sm text-gray-500 dark:text-gray-400">
                         <thead className="bg-gray-50 text-xs text-gray-700 uppercase dark:bg-gray-700 dark:text-gray-400">
                             <tr>
-                                {['#', 'siswa', 'user', 'peraturan', 'keterangan', 'status', 'waktu', 'aksi'].map((key) => (
+                                {['#', 'siswa', 'petugas', 'peraturan', 'keterangan', 'status', 'waktu', 'aksi'].map((key) => (
                                     <th
                                         key={key}
                                         className={`cursor-pointer px-6 py-3 ${key === 'aksi' ? 'cursor-default' : ''}`}
@@ -209,9 +218,7 @@ export default function PelanggaranPage() {
                                             <td className="px-6 py-4">{item.peraturan?.jenis}</td>
                                             <td className="px-6 py-4">{item.keterangan}</td>
                                             <td className="px-6 py-4">
-                                                <span
-                                                    className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${getStatusBadgeClass(item.status)}`}
-                                                >
+                                                <span className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${getStatusBadgeClass(item.status)}`}>
                                                     {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
                                                 </span>
                                             </td>

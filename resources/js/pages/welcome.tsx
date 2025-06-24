@@ -1,6 +1,6 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import axios from 'axios';
-import { AlertTriangle, Clock, FileText, Moon, Search, Shield, Sun, User } from 'lucide-react';
+import { AlertTriangle, Clock, FileText, Moon, Search, Sun, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 type PelanggaranType = {
@@ -123,7 +123,17 @@ export default function Welcome() {
                         </button>
                         <span className="text-xl font-bold tracking-wider">SILANI | </span>
                         <Link
-                            href={auth.user ? route('dashboard') : route('login')}
+                            href={
+                                auth.user
+                                    ? auth.user.role === 'Admin'
+                                        ? route('dashboard')
+                                        : auth.user.role === 'Guru BK'
+                                          ? route('bkdashboard')
+                                          : auth.user.role === 'Wali Kelas'
+                                            ? route('wkdashboard')
+                                            : route('dashboard') // fallback
+                                    : route('login')
+                            }
                             className={`rounded border px-4 py-1.5 transition ${
                                 isDark
                                     ? 'border-white text-white hover:bg-white hover:text-black'
@@ -146,7 +156,7 @@ export default function Welcome() {
 
                     <h1 className="z-10 mb-4 text-4xl font-bold text-white lg:text-6xl">Selamat Datang di SILANI</h1>
                     <p className="z-10 mb-8 max-w-xl text-lg text-gray-200">
-                        Sistem Informasi Layanan Siswa Digital. Cari informasi pelanggaran berdasarkan NISN atau nama siswa.
+                        Sistem Informasi Pelanggaran dan Sanksi. Cari informasi pelanggaran berdasarkan NISN atau nama siswa.
                     </p>
 
                     <div className="relative z-10 w-full max-w-md">
@@ -255,7 +265,7 @@ export default function Welcome() {
                             </div>
                         )}
                     </section>
-                )}  
+                )}
             </div>
         </>
     );

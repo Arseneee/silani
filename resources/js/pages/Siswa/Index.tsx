@@ -29,6 +29,14 @@ interface Kelas {
 interface PageProps {
     siswa: Siswa[];
     kelasOptions: Kelas[];
+    auth: {
+        user: {
+            id: number;
+            name: string;
+            email: string;
+            role: 'Admin' | 'Guru BK' | 'Wali Kelas';
+        } | null;
+    };
     [key: string]: any;
 }
 
@@ -38,6 +46,9 @@ export default function SiswaPage() {
     const { props } = usePage<PageProps>();
     const siswaFromServer = props.siswa || [];
     const kelasOptions = props.kelasOptions || [];
+    const { auth } = props;
+
+    const isNotAdmin = auth.user?.role === 'Guru BK' || auth.user?.role === 'Wali Kelas';
 
     const [siswaData, setSiswaData] = useState<Siswa[]>(siswaFromServer);
     const [filteredData, setFilteredData] = useState<Siswa[]>(siswaFromServer);
@@ -74,6 +85,11 @@ export default function SiswaPage() {
         }
         setFilteredData(result);
     }, [searchTerm, statusFilter, sortField, sortDirection, siswaData]);
+
+    useEffect(() => {
+        const sorted = [...siswaFromServer].sort((a, b) => b.total_poin - a.total_poin);
+        setSiswaData(sorted);
+    }, [siswaFromServer]);
 
     const handleSort = (field: keyof Siswa) => {
         if (field === sortField) {
@@ -150,12 +166,14 @@ export default function SiswaPage() {
             <div className="p-4">
                 <div className="mb-6 flex items-center justify-between">
                     <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Daftar Siswa</h1>
-                    <button
-                        onClick={openCreateModal}
-                        className="inline-flex items-center gap-2 rounded bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700"
-                    >
-                        <Plus size={16} /> Tambah Siswa
-                    </button>
+                    {!isNotAdmin && (
+                        <button
+                            onClick={openCreateModal}
+                            className="inline-flex items-center gap-2 rounded bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700"
+                        >
+                            <Plus size={16} /> Tambah Siswa
+                        </button>
+                    )}
                 </div>
 
                 <SearchFilterBar
@@ -175,18 +193,20 @@ export default function SiswaPage() {
                     <table className="w-full text-left text-sm text-gray-500 dark:text-gray-400">
                         <thead className="bg-gray-50 text-xs text-gray-700 uppercase dark:bg-gray-700 dark:text-gray-400">
                             <tr>
-                                {['#', 'nisn', 'nama', 'kelas', 'orang tua', 'no hp', 'total poin', 'status', 'aksi'].map((key) => (
-                                    <th
-                                        key={key}
-                                        className={`cursor-pointer px-6 py-3 ${key === 'aksi' ? 'cursor-default' : ''}`}
-                                        onClick={() => key !== 'aksi' && handleSort(key as keyof Siswa)}
-                                    >
-                                        <div className="flex items-center">
-                                            {key.toUpperCase()}
-                                            {sortField === key && <ArrowUpDown className="ml-1 h-3.5 w-3.5" />}
-                                        </div>
-                                    </th>
-                                ))}
+                                {['#', 'nisn', 'nama', 'kelas', 'orang tua', 'no hp', 'total poin', 'status', ...(!isNotAdmin ? ['aksi'] : [])].map(
+                                    (key) => (
+                                        <th
+                                            key={key}
+                                            className={`px-6 py-3 ${key === 'aksi' ? 'cursor-default' : 'cursor-pointer'}`}
+                                            onClick={() => key !== 'aksi' && handleSort(key as keyof Siswa)}
+                                        >
+                                            <div className="flex items-center">
+                                                {key.toUpperCase()}
+                                                {sortField === key && <ArrowUpDown className="ml-1 h-3.5 w-3.5" />}
+                                            </div>
+                                        </th>
+                                    ),
+                                )}
                             </tr>
                         </thead>
                         <tbody>
@@ -209,29 +229,31 @@ export default function SiswaPage() {
                                             <td className="px-6 py-4">{item.hp_ortu}</td>
                                             <td className="px-6 py-4 text-center">{item.total_poin}</td>
                                             <td className="px-6 py-4">{item.status}</td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-3">
-                                                    <button
-                                                        onClick={() => openEditModal(item)}
-                                                        className="text-blue-600 hover:text-blue-800"
-                                                        title="Edit"
-                                                    >
-                                                        <Pencil size={18} />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => confirmDelete(item.id)}
-                                                        className="text-red-600 hover:text-red-800"
-                                                        title="Hapus"
-                                                    >
-                                                        <Trash2 size={18} />
-                                                    </button>
-                                                </div>
-                                            </td>
+                                            {!isNotAdmin && (
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <button
+                                                            onClick={() => openEditModal(item)}
+                                                            className="text-blue-600 hover:text-blue-800"
+                                                            title="Edit"
+                                                        >
+                                                            <Pencil size={18} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => confirmDelete(item.id)}
+                                                            className="text-red-600 hover:text-red-800"
+                                                            title="Hapus"
+                                                        >
+                                                            <Trash2 size={18} />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            )}
                                         </motion.tr>
                                     ))
                                 ) : (
                                     <tr className="bg-white dark:bg-gray-800">
-                                        <td colSpan={9} className="px-6 py-12 text-center">
+                                        <td colSpan={isNotAdmin ? 8 : 9} className="px-6 py-12 text-center">
                                             <div className="flex flex-col items-center">
                                                 <svg
                                                     className="mb-3 h-12 w-12 text-gray-400"
@@ -267,15 +289,19 @@ export default function SiswaPage() {
                     </div>
                 </div>
 
-                <SiswaModal
-                    isOpen={isModalOpen}
-                    onClose={() => setIsModalOpen(false)}
-                    onSubmit={handleSubmit}
-                    initialData={selectedSiswa}
-                    title={selectedSiswa ? 'Edit Siswa' : 'Tambah Siswa'}
-                    kelasOptions={kelasOptions}
-                />
-                <ConfirmDeleteModal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} onConfirm={handleDelete} />
+                {!isNotAdmin && (
+                    <>
+                        <SiswaModal
+                            isOpen={isModalOpen}
+                            onClose={() => setIsModalOpen(false)}
+                            onSubmit={handleSubmit}
+                            initialData={selectedSiswa}
+                            title={selectedSiswa ? 'Edit Siswa' : 'Tambah Siswa'}
+                            kelasOptions={kelasOptions}
+                        />
+                        <ConfirmDeleteModal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} onConfirm={handleDelete} />
+                    </>
+                )}
             </div>
         </AppLayout>
     );
