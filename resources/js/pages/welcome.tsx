@@ -104,7 +104,10 @@ export default function Welcome() {
 
     return (
         <>
-            <Head title="Welcome" />
+            <Head>
+                <title>Home</title>
+                <link rel="icon" href="img/logo.png" />
+            </Head>
             <div className={`${isDark ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'} flex min-h-screen flex-col`}>
                 {/* Navbar */}
                 <nav
@@ -131,7 +134,7 @@ export default function Welcome() {
                                           ? route('bkdashboard')
                                           : auth.user.role === 'Wali Kelas'
                                             ? route('wkdashboard')
-                                            : route('dashboard') // fallback
+                                            : route('dashboard')
                                     : route('login')
                             }
                             className={`rounded border px-4 py-1.5 transition ${

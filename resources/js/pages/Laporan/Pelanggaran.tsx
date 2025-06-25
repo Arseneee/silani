@@ -111,7 +111,10 @@ export default function LaporanPelanggaran({ pelanggaran: initialPelanggaran, fi
 
     return (
         <AppLayout>
-            <Head title="Cetak Laporan Pelanggaran" />
+            <head>
+                <title>Cetak Laporan Pelanggaran</title>
+                <link rel="icon" href="img/logo.png" />
+            </head>
             
             <div className="min-h-screen transition-colors duration-300">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

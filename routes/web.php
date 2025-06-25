@@ -19,8 +19,6 @@ Route::get('/', function () {
 Route::middleware(['auth', 'verified', 'role:Admin'])->group(function () {
     Route::resource('users', UserController::class);
     Route::resource('kelas', KelasController::class);
-    Route::get('laporan', [PelanggaranController::class, 'laporan'])->name('laporan.pelanggaran');
-    Route::get('/laporan/cetak', [PelanggaranController::class, 'cetak'])->name('laporan.pelanggaran.cetak');
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/system-logs', [SystemLogController::class, 'index'])->name('system-logs.index');
     Route::resource('devices', DeviceController::class);
@@ -32,14 +30,14 @@ Route::middleware(['auth', 'verified', 'WaliKelas'])->group(function () {
 
 Route::middleware(['auth', 'verified', 'GuruBK'])->group(function () {
     Route::get('bkdashboard', [DashboardController::class, 'gurubk'])->name('bkdashboard');
-    Route::get('laporan', [PelanggaranController::class, 'laporan'])->name('laporan.pelanggaran');
-    Route::get('/laporan/cetak', [PelanggaranController::class, 'cetak'])->name('laporan.pelanggaran.cetak');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('siswa', SiswaController::class);
     Route::resource('pelanggaran', PelanggaranController::class);
     Route::resource('peraturan', PeraturanController::class);
+    Route::get('laporan', [PelanggaranController::class, 'laporan'])->name('laporan.pelanggaran');
+    Route::get('/laporan/cetak', [PelanggaranController::class, 'cetak'])->name('laporan.pelanggaran.cetak');
 });
 
 
