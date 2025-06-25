@@ -6,16 +6,27 @@ use App\Models\Kelas;
 use App\Models\Siswa;
 use App\Helpers\LogActivity;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class SiswaController extends Controller
 {
     public function index()
     {
-        $siswa = Siswa::with('kelas')->get();
-        return Inertia::render('Siswa/Index', [
+        $user = Auth::user();
+
+        if ($user->role === 'Wali Kelas') {
+            $kelas = Kelas::where('user_id', $user->id)->first();
+
+            $siswa = $kelas
+                ? Siswa::where('kelas_id', $kelas->id)->with('kelas')->get()
+                : collect();
+        } else {
+            $siswa = Siswa::with('kelas')->get();
+        }
+
+        return inertia('Siswa/Index', [
             'siswa' => $siswa,
-            'kelasOptions' => Kelas::select('id', 'nama')->get(),
         ]);
     }
 

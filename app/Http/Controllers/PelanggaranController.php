@@ -46,9 +46,6 @@ class PelanggaranController extends Controller
         ]);
 
         $pelanggaran = Pelanggaran::create($validated);
-
-        $this->updateTotalPoin($validated['siswa_id']);
-
         $pelanggaran->load(['siswa.kelas', 'peraturan']);
 
         $siswa = $pelanggaran->siswa;
@@ -56,6 +53,10 @@ class PelanggaranController extends Controller
 
         LogActivity::add('create', "Pelanggaran ditambahkan untuk siswa {$siswa->nama} karena {$peraturan->jenis} ({$peraturan->kategori}) dengan status {$pelanggaran->status}");
 
+        $statusLama = $siswa->status;
+        [$statusLama, $statusBaru] = $siswa->updatePoinDanStatus();
+
+        $kirimNotifikasiStatusBaru = in_array($statusBaru, ['SPO1', 'SPO2', 'SPO3', 'Drop Out']) && $statusBaru !== $statusLama;
         $ortuNoHp = FonnteService::normalizePhone($siswa->hp_ortu);
         $isValidHp = $ortuNoHp && preg_match('/^62[0-9]{9,}$/', $ortuNoHp);
 
@@ -66,12 +67,12 @@ Orangtua/Wali siswa
 Nama  : {$siswa->nama}
 NISN  : {$siswa->nisn}
 Kelas : {$siswa->kelas->nama}
-            
+
 Anak anda melakukan pelanggaran di sekolah:
 - Pelanggaran: {$peraturan->jenis}
 - Status: {$pelanggaran->status}
 - Waktu: {$pelanggaran->waktu_terjadi}
-            
+
 {$siswa->nama} memiliki total *{$siswa->total_poin}* poin,
 dengan status: *{$siswa->status}*.
 
@@ -84,10 +85,34 @@ dengan status: *{$siswa->status}*.
                     'nomor' => $ortuNoHp,
                     'response' => $response
                 ]);
-
                 LogActivity::add('fonnte', "Gagal kirim WA ke ortu siswa {$siswa->nama} ({$ortuNoHp})");
             } else {
                 LogActivity::add('fonnte', "Berhasil kirim WA ke ortu siswa {$siswa->nama} ({$ortuNoHp})");
+            }
+
+            if ($kirimNotifikasiStatusBaru) {
+                $statusMessage =
+                    "📢 *Pemberitahuan dari SMK Negeri 1 Percut Sei Tuan*
+Yth. Orang Tua dari *{$siswa->nama}* (NISN: {$siswa->nisn}),
+Kami informasikan bahwa status pelanggaran anak Anda kini menjadi *{$statusBaru}*
+Total poin pelanggaran: *{$siswa->total_poin}*.
+Mohon perhatian dan bimbingan lebih lanjut kepada siswa agar dapat memperbaiki sikap dan kedisiplinannya.
+
+Terima kasih.
+
+> SILANI | Pesan Otomatis                   SMK Negeri 1 Percut Sei Tuan";
+
+                $statusResponse = FonnteService::sendMessage($ortuNoHp, $statusMessage);
+
+                if (!isset($statusResponse['status']) || $statusResponse['status'] !== true) {
+                    Log::warning('Gagal kirim WA status ke ortu siswa', [
+                        'nomor' => $ortuNoHp,
+                        'response' => $statusResponse
+                    ]);
+                    LogActivity::add('fonnte', "Gagal kirim WA status baru ke ortu siswa {$siswa->nama} ({$ortuNoHp})");
+                } else {
+                    LogActivity::add('fonnte', "Berhasil kirim WA status baru ke ortu siswa {$siswa->nama} ({$ortuNoHp})");
+                }
             }
         } else {
             Log::info('Nomor HP ortu tidak valid atau data pelanggaran tidak lengkap', [
@@ -100,6 +125,7 @@ dengan status: *{$siswa->status}*.
 
         return redirect()->back()->with('success', 'Pelanggaran berhasil ditambahkan.');
     }
+
 
     public function update(Request $request, $id)
     {
@@ -209,7 +235,7 @@ dengan status: *{$siswa->status}*.
             'bulan' => 'nullable|integer',
             'status' => 'nullable|string',
         ]);
-        
+
         $tahun = $request->tahun;
         $bulan = $request->bulan;
         $status = $request->status;

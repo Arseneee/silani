@@ -27,28 +27,32 @@ class Siswa extends Model
 
     public function updatePoinDanStatus()
     {
-        // Hitung total poin pelanggaran
-        $totalPoin = $this->pelanggaran()->join('peraturan', 'pelanggaran.peraturan_id', '=', 'peraturan.id')
+        $totalPoin = $this->pelanggaran()
+            ->join('peraturan', 'pelanggaran.peraturan_id', '=', 'peraturan.id')
             ->sum('peraturan.poin');
 
-        // Tentukan status berdasarkan total poin
+        $statusLama = $this->status;
+        $statusBaru = 'Aktif';
+
         if ($totalPoin >= 100) {
-            $status = 'Drop Out';
+            $statusBaru = 'Drop Out';
         } elseif ($totalPoin >= 75) {
-            $status = 'SPO3';
+            $statusBaru = 'SPO3';
         } elseif ($totalPoin >= 50) {
-            $status = 'SPO2';
+            $statusBaru = 'SPO2';
         } elseif ($totalPoin >= 25) {
-            $status = 'SPO1';
-        } else {
-            $status = 'Aktif';
+            $statusBaru = 'SPO1';
         }
 
         $this->update([
             'total_poin' => $totalPoin,
-            'status' => $status,
+            'status' => $statusBaru,
         ]);
+
+        return [$statusLama, $statusBaru];
     }
+
+
 
     public function kelas()
     {
