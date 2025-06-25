@@ -32,6 +32,8 @@ Route::middleware(['auth', 'verified', 'WaliKelas'])->group(function () {
 
 Route::middleware(['auth', 'verified', 'GuruBK'])->group(function () {
     Route::get('bkdashboard', [DashboardController::class, 'gurubk'])->name('bkdashboard');
+    Route::get('laporan', [PelanggaranController::class, 'laporan'])->name('laporan.pelanggaran');
+    Route::get('/laporan/cetak', [PelanggaranController::class, 'cetak'])->name('laporan.pelanggaran.cetak');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
